@@ -8,6 +8,9 @@
     <canvas id="gameCanvas" width="800" height="600"></canvas>
   </body>
 </html>
+
+
+
 <script type="text/javascript">
 var canvas, canvasContext;
 
@@ -20,60 +23,67 @@ var ballSpeedY = 1;
 var mouseX;
 var mouseY;
 
-
-
-
 const PADDLE_WIDTH = 100;
 const PADDLE_THICKNESS = 10;
 const PADDLE_DIST_FROM_EDGE = 30;
 
-const BRICK_W = 100;
-const BRICK_H = 50;
-const BRICK_Count = 8;
+const BRICK_W = 50;
+const BRICK_H = 25;
 
-var brickGrid= new Array(BRICK_Count);
+const BRICK_GAP = 2
+
+const BRICK_ROWS = 8;
+const BRICK_COLS = 16;
+
+var brickGrid= new Array(BRICK_COLS*BRICK_ROWS);
 
 var paddleX = 400;
 
 
 window.onload = function(){
 
-  canvas = document.getElementById('gameCanvas');
-  canvasContext = canvas.getContext('2d');
+        canvas = document.getElementById('gameCanvas');
+        canvasContext = canvas.getContext('2d');
 
-  var fps = 300;
-  setInterval(updateAll,1000/fps);
+        var fps = 300;
+        setInterval(updateAll,1000/fps);
 
-  canvas.addEventListener('mousemove', updateMousePos);
+        canvas.addEventListener('mousemove', updateMousePos);
 
-  brickReset();
-}
+        brickReset();
+    }
 
 function updateMousePos(evt){
-    var rect = canvas.getBoundingClientRect(); //gets relative size of element to viewport
+        var rect = canvas.getBoundingClientRect(); //gets relative size of element to viewport
 
-    var root = document.documentElement;
+        var root = document.documentElement;
 
-    mouseX = evt.clientX - rect.left - root.scrollLeft; //clientX is the mouse pos
-    mouseY = evt.clientY - rect.top - root.scrollTop;
+        mouseX = evt.clientX - rect.left - root.scrollLeft; //clientX is the mouse pos
+        mouseY = evt.clientY - rect.top - root.scrollTop;
 
-    paddleX = mouseX-(PADDLE_WIDTH/2);
+        paddleX = mouseX-(PADDLE_WIDTH/2);
 
-}
+      }
 
 function updateAll(){
-  moveAll();
-  drawAll();
-}
+      moveAll();
+      drawAll();
+
+      }
 
 function ballReset() {
-  ballX = canvas.width/2;
-  ballY = canvas.height/2
+      ballX = canvas.width/2;
+      ballY = canvas.height/2
 
-}
+    }
 function moveAll(){
           ballX+=ballSpeedX;
           ballY+=ballSpeedY;
+
+          var paddleTopEdgeY =  canvas.height-PADDLE_DIST_FROM_EDGE;
+          var paddleBottomEdgeY =  paddleTopEdgeY + PADDLE_THICKNESS;
+          var paddleLeftEdgeX  = paddleX;
+          var paddleRightEdgeX = paddleX + PADDLE_WIDTH;
 
         if(ballX>canvas.width){    //rightscreen
           ballSpeedX*= -1;
@@ -88,78 +98,90 @@ function moveAll(){
         if(ballY<0){
             ballSpeedY*= -1;      //top
         }
+//edge condition
 
-        //edge condition
-      var paddleTopEdgeY =  canvas.height-PADDLE_DIST_FROM_EDGE;
-      var paddleBottomEdgeY =  paddleTopEdgeY + PADDLE_THICKNESS;
-      var paddleLeftEdgeX  = paddleX;
-      var paddleRightEdgeX = paddleX + PADDLE_WIDTH;
 
       if(ballY> paddleTopEdgeY &&
       ballY < paddleBottomEdgeY  &&
            ballX > paddleLeftEdgeX &&
-           ballX < paddleRightEdgeX){
+           ballX < paddleRightEdgeX)  {
 
-            ballSpeedY *= -1;
+                  ballSpeedY *= -1;
 
-  //player control
+//player control
+                  var centerOfPaddleX = paddleX + PADDLE_WIDTH/2;
+                  var ballDistFromPaddleCenterX = ballX - centerOfPaddleX;
 
-            var centerOfPaddleX = paddleX + PADDLE_WIDTH/2;
-            var ballDistFromPaddleCenterX = ballX - centerOfPaddleX;
-
-            ballSpeedX = ballDistFromPaddleCenterX*0.35;
-          }
+                  ballSpeedX = ballDistFromPaddleCenterX*0.35;
+                }
 
 
-}
+            }
 function drawBricks(){
 
-  for(var i=0;i<BRICK_Count;i++){
-    if(brickGrid[i]==true){
-    colorRect(BRICK_W*i,0,BRICK_W-2, BRICK_H, 'blue')
 
-    }
-  }
-}
+        for(var eachRow =0; eachRow<BRICK_ROWS; eachRow++){
+
+            for(var eachCol=0;eachCol<BRICK_COLS;eachCol++){
+
+                var arrayIndex= BRICK_COLS* eachRow+eachCol;
+
+                if(brickGrid[arrayIndex]==true){
+                  colorRect(BRICK_W*eachCol,BRICK_H*eachRow,
+                    BRICK_W-BRICK_GAP, BRICK_H-BRICK_GAP, 'blue')
+                  }//if
+    }//col
+  }//row
+}//function
 
 function brickReset(){
-  for(var i=0;i<BRICK_Count;i++){
 
-    if(Math.random()<0.5){
-      brickGrid[i]=true;
-    }
-  }
+      for(var i=0;i<BRICK_COLS* BRICK_ROWS;i++){
 
-}
+            if(Math.random()<0.5){
+              brickGrid[i]=true;
+            }
+        else{
+          brickGrid[i]=false;
+        }
+      }//reset loop
+    }//function
 function drawAll(){
         colorRect(0,0, canvas.width, canvas.height, 'black');
-
+   //canvas
         colorCircle(ballX,ballY, 10, 'red');
-
+  //ball
         colorRect(paddleX, canvas.height-PADDLE_DIST_FROM_EDGE - PADDLE_THICKNESS, PADDLE_WIDTH, PADDLE_THICKNESS, 'white');
-
+  //paddle
         drawBricks();
 
-        colorText(Math.round(mouseX)+" , "+ Math.round(mouseY), mouseX, mouseY, 'yellow');
+        var mouseBrickCol = Math.floor(mouseX/ BRICK_W);
+        var mouseBrickRow = Math.floor(mouseY/BRICK_H);
+          colorText( mouseBrickCol+" , "+ mouseBrickRow , mouseX, mouseY, 'yellow');
+//debugger mouse text
+
+    }
 
 
-}
 
 function colorText(showWords, textX, textY, fillColor){
-  canvasContext.fillStyle= fillColor;
-  canvasContext.fillText(showWords, textX, textY);
-}
+      canvasContext.fillStyle= fillColor;
+      canvasContext.fillText(showWords, textX, textY);
+    }// text call function
+
+
 
 function colorRect(topLeftX, topLeftY, boxWidth, boxHeight, fillColor){
-  canvasContext.fillStyle = fillColor;
-  canvasContext.fillRect(topLeftX,topLeftY, boxWidth, boxHeight);
-}
+      canvasContext.fillStyle = fillColor;
+      canvasContext.fillRect(topLeftX,topLeftY, boxWidth, boxHeight);
+    }//helper function for rectangles
+
 function colorCircle(centerX,centerY, radius, fillColor){
-  canvasContext.fillStyle = fillColor;
-  canvasContext.beginPath();
-  canvasContext.arc(centerX,centerY,10,0, Math.PI*2,true);
-  canvasContext.fill();
-}
+      canvasContext.fillStyle = fillColor;
+      canvasContext.beginPath();
+      canvasContext.arc(centerX,centerY,10,0, Math.PI*2,true);
+      canvasContext.fill();
+    }//helper function for circle
 
 
 
